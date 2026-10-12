@@ -1,1 +1,1 @@
-# payment-reminder-assistant
+# Payment Reminder Assistant
