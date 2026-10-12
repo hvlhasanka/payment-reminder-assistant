@@ -1,6 +1,8 @@
 # Payment Reminder Assistant Service
 
-## Setup Instructions (Part 1 - Rules Engine)
+## PART 1 - The Rules Engine
+
+### Setup Instructions 
 
 1. Navigate to the TypeScript folder and install dependencies:
 
@@ -23,7 +25,7 @@ npm run plan -- --invoices ../data/invoices.json --sent ../data/sent.json --toda
 
 *(The action plan will be written to `../actions.json` in the specified JSON structure).*
 
-## Execution Flow (For Part 1 - Rules Engine)
+### Execution Flow
 
 1. Verify the validation of the date format and value
 2. Verify the availability and authenticity of the data

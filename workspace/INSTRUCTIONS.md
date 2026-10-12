@@ -126,7 +126,6 @@ non zero code.
 
 One page for the owner, started with:
 
-- Python, from inside `python/`: `python app.py`
 - TypeScript, from inside `typescript/`: `npm run app`
 
 It must read these environment variables: `PORT` (default `8000`), `DATA_DIR` (the
