@@ -74,22 +74,45 @@ describe("Plan Engine - buildPlan", () => {
       assert.equal(plan.actions[0].days_overdue, 10);
     });
 
-    it("qualifies for final at 24 days overdue (needs_approval: true)", () => {
+    it("tests threshold boundaries: 0, 2 (none), 3 (friendly), 9 (friendly), 10 (firm), 23 (firm), 24 (final)", () => {
       const invoices = [
-        {
-          id: "INV-1",
-          customer: "Client A",
-          amount: 1000,
-          currency: "EUR",
-          due_date: "2026-09-18", // exactly 24 days
-          paid_date: null,
-        },
+        { id: "INV-0", customer: "A", amount: 100, currency: "EUR", due_date: "2026-10-12", paid_date: null }, // 0 days
+        { id: "INV-2", customer: "A", amount: 100, currency: "EUR", due_date: "2026-10-10", paid_date: null }, // 2 days
+        { id: "INV-3", customer: "A", amount: 100, currency: "EUR", due_date: "2026-10-09", paid_date: null }, // 3 days -> friendly
+        { id: "INV-9", customer: "A", amount: 100, currency: "EUR", due_date: "2026-10-03", paid_date: null }, // 9 days -> friendly
+        { id: "INV-10", customer: "A", amount: 100, currency: "EUR", due_date: "2026-10-02", paid_date: null }, // 10 days -> firm
+        { id: "INV-23", customer: "A", amount: 100, currency: "EUR", due_date: "2026-09-19", paid_date: null }, // 23 days -> firm
+        { id: "INV-24", customer: "A", amount: 100, currency: "EUR", due_date: "2026-09-18", paid_date: null }, // 24 days -> final
+      ];
+      const plan = buildPlan(invoices, [], today);
+      const actionMap = new Map(plan.actions.map((a) => [a.invoice_id, a.step]));
+      assert.equal(actionMap.has("INV-0"), false);
+      assert.equal(actionMap.has("INV-2"), false);
+      assert.equal(actionMap.get("INV-3"), "friendly");
+      assert.equal(actionMap.get("INV-9"), "friendly");
+      assert.equal(actionMap.get("INV-10"), "firm");
+      assert.equal(actionMap.get("INV-23"), "firm");
+      assert.equal(actionMap.get("INV-24"), "final");
+    });
+  });
+
+  describe("Duplicate Invoice IDs", () => {
+    it("skips all duplicate invoices and records the invoice ID only once in skipped", () => {
+      const invoices = [
+        { id: "INV-DUP", customer: "A", amount: 100, currency: "EUR", due_date: "2026-09-01", paid_date: null },
+        { id: "INV-DUP", customer: "A", amount: 200, currency: "EUR", due_date: "2026-09-01", paid_date: null },
+        { id: "INV-DUP", customer: "A", amount: 300, currency: "EUR", due_date: "2026-09-01", paid_date: null },
+        { id: "INV-VALID", customer: "B", amount: 100, currency: "EUR", due_date: "2026-10-09", paid_date: null },
       ];
       const plan = buildPlan(invoices, [], today);
       assert.equal(plan.actions.length, 1);
-      assert.equal(plan.actions[0].step, "final");
-      assert.equal(plan.actions[0].needs_approval, true);
-      assert.equal(plan.actions[0].days_overdue, 24);
+      assert.equal(plan.actions[0].invoice_id, "INV-VALID");
+
+      assert.equal(plan.skipped.length, 1);
+      assert.deepEqual(plan.skipped[0], {
+        invoice_id: "INV-DUP",
+        reason: "duplicate_id",
+      });
     });
   });
 
